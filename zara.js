@@ -2,13 +2,14 @@ var request = require('request'),
 	cheerio = require('cheerio');
 	async = require('async');
 
-var url = "http://www.zara.com/uk/en/new-this-week/woman-c287002.html";
+var url = "http://www.zara.com/uk/en/new-this-week/woman-c287002.html",
+	productLinks = [];
 
 
 // This function will visit the new in page and get the links for all the new products
 // We have a callback in this function that will execute once we have all the product links in an array.
 function getProducts(url, callback) {
-	request(url, function(err,resp,body) {
+	request({url: url, jar: true}, function(err,resp,body) {
 		if (err)
 			throw err;
 		$ = cheerio.load(body);
@@ -43,33 +44,49 @@ function getProducts(url, callback) {
 }
 
 getProducts(url, function(productLinks) {
-	for (link in productLinks) {
-		var productUrl = productLinks[link];
-		var urlNumber = link;
+	for(i=0; i < productLinks.length; i++) {
+		(function(i) {
+			setTimeout(function() {
+				var productUrl = productLinks[i]
+				console.log(productUrl);
+
+				// We create a self executing with the productUrl variable passed in on each loop (the myLink variable).
+				// By doing it this way we the link address for each iteration over the loop, otherwise we'd get the last link (I think? not sure tbh)
+				request ({url: productUrl, jar: true}, (function(myLink) {
+					return function(err, resp, body) {
+						if (err)
+							throw err;
+						$_ = cheerio.load(body);
 		
-		// We create a self executing with the productUrl variable passed in on each loop (the myLink variable).
-		// By doing it this way we the link address for each iteration over the loop, otherwise we'd get the last link (I think? not sure tbh)
-		request (productUrl, (function(myLink) {
-			return function(err, resp, body) {
-				if (err)
-					throw err;
-				$_ = cheerio.load(body);
-
-				if($_(".image-big").attr('src') != undefined) {
-					var imageUrl =  $_(".image-big").attr('src');
-					var productName = $_("h1").text().replace(/\s+/g, ' ').slice(1);
-					var productPrice = "£" + $_("span.price").attr("data-price").split(" ")[0];					
-				};
-
-				var item = {
-					"productUrl" : myLink,
-					"imageUrl" : imageUrl,
-					"productName" : productName,
-					"productPrice" : productPrice
-				};
-
-				console.log(item);
-			}
-		}) (productUrl));
-	};
+								var imageUrl =  $_(".image-big").attr('src');
+								var productName = $_("h1").text().replace(/\s+/g, ' ').slice(1);
+		
+								if (imageUrl != undefined) {
+									var productPrice = "£" + $_("span.price").attr("data-price").split(" ")[0];					
+								}
+		
+								var item = {
+									"productUrl" : myLink,
+									"imageUrl" : imageUrl,
+									"productName" : productName,
+									"productPrice" : productPrice
+								};
+		
+								console.log(item);
+							}
+				}) (productUrl));
+				
+			}, 1000 * i);
+		}(i));
+	}
 });
+	
+	// 		console.log(productLinks)
+
+			/*var productUrl = productLinks[link];
+
+	
+
+	/*for (link in productLinks) {
+		
+	};*/

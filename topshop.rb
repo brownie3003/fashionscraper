@@ -18,12 +18,15 @@ page_links.each do |link|
 	link_titles << link.text
 end
 
+## Create an array of all the categories, look over the array, for each element get the href of the link, create a new agent_#{element} = Mechanize.new which will go and do all the shit required.
+
 dresses_index = link_titles.index{|title| title.include?("Dresses & Playsuits")}
 
 #puts dresses_index
 
 dresses = link_titles[link_titles.index{|title| title.include?("Dresses & Playsuits")}]
 # puts dresses
+
 
 agent.page.link_with(text: dresses).click
 
@@ -68,7 +71,7 @@ productLinks.each do |link|
 	 	end
 	end
 
-	puts imageLinks
+	# puts imageLinks
 end
 
 

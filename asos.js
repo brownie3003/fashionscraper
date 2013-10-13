@@ -37,21 +37,27 @@ getProducts(url, function (productLinks) {
 
 				var imageUrl = $_('#ctl00_ContentMainPage_imgMainImage').attr("src");
 
+				if (imageUrl.substring(0,2) == "//") {
+					imageUrl = "http:" + imageUrl;
+				};
+
 				var type = $_('#ctl00_ContentMainPage_ctlSeparateProduct_divInvLongDescription a:nth-child(1) strong').text();
 
 				var brand = $_('a:nth-child(2) strong').text();
 
 				var price = $_('#ctl00_ContentMainPage_ctlSeparateProduct_lblProductPrice').text();
 
-				shop = "ASOS";
+				var shop = "ASOS";
 
 				var item = {
 					"title": title, 
+					"url": link,
 					"price": price,
 					"brand": brand,
 					"shop": shop,
 					"type": type,
-					"imageUrl": imageUrl
+					"imageUrl": imageUrl,
+					"collectionDate" : new Date().toDateString()
 				};
 
 				db.collection('products').find({url: link}).toArray(function (err, result) {

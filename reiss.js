@@ -2,14 +2,14 @@ var request = require('request'),
 	cheerio = require('cheerio'),
 	db = require('mongoskin').db('weave:weave2013@ds047948.mongolab.com:47948/weave');
 
-var url = "http://www.hm.com/gb/subdepartment/LADIES?Nr=90001#pageSize=MORE&Nr=90001";
+var url = "http://www.reiss.com/womens/womens-new-arrivals/";
 
 function getProducts(url, callback) {
 	request(url, function (error, response, body) {
 		if (error) throw error;
 
 		$ = cheerio.load(body);
-		productList = $("#list-products a");
+		productList = $(".product_short_desc");
 		// console.log(productList);
 
 		var productLinks = [];
@@ -18,12 +18,12 @@ function getProducts(url, callback) {
 			productLinks.push($(this).attr("href"));
 		})
 
-		//console.log(productLinks);
+		console.log(productLinks);
 		callback(productLinks);
 	});
 };
 
-getProducts(url, function (productLinks) {
+getProducts(url, function (productLinks) { 
 	for(link in productLinks) {
 
 		request(productLinks[link], (function(link) {
@@ -31,22 +31,29 @@ getProducts(url, function (productLinks) {
 				if (error) throw error;
 				
 				$_ = cheerio.load(body);
+				
 
-				var title = $_("h1").text().replace(/\s+/g, ' ').split("£")[0].slice(1);
+				var title = $_(".product_title").text().trim()
 
-				var imageUrl = $_("#product-image").attr('src');
+				console.log(title)
 
-				if (imageUrl.substring(0,2) == "//") {
-					imageUrl = "http:" + imageUrl;
-				};
+				var imageUrl = $_("prod_image_large").attr('href');
 
-				var type = $_(".breadcrumbs li:nth-last-child(2)").text().split("/")[0].trim();
+				console.log(imageUrl)
 
-				var brand = "H&M";
+				//console.log(imageUrl);
 
-				var shop = "H&M";
+				// if (imageUrl.substring(0,2) == "//") {
+				// 	imageUrl = "http:" + imageUrl;
+				// };
 
-				var price = $_("#text-price span").text()
+				var type = title.split(" ").pop();
+
+				var brand = "& other Stories";
+
+				var shop = "& other Stories";
+
+				var price = $_(".product-selection .price").text()
 
 				var item = {
 					"title": title, 
@@ -59,7 +66,7 @@ getProducts(url, function (productLinks) {
 					"collectionDate" : new Date().toDateString()
 				};				
 
-				db.collection('products').find({url: link}).toArray(function (err, result) {
+				/*db.collection('products').find({url: link}).toArray(function (err, result) {
 					if (err) throw err;
 					if (result.length == 0) {
 						db.collection('products').insert(item, function (err, result) {
@@ -67,17 +74,10 @@ getProducts(url, function (productLinks) {
 							console.log("Inserted item " + title)
 						});
 					}
-				});
+				});*/
 
 				//console.log(item);
 			}
 		})(productLinks[link]));
 	}
 });
-
-/*var google = "http://www.google.com";
-request(google, function (error, response, body) {
-  if (!error && response.statusCode == 200) {
-    console.log(body) // Print the google web page.
-  }
-})*/

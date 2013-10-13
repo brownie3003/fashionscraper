@@ -2,20 +2,20 @@ var request = require('request'),
 	cheerio = require('cheerio'),
 	db = require('mongoskin').db('weave:weave2013@ds047948.mongolab.com:47948/weave');
 
-var url = "http://www.hm.com/gb/subdepartment/LADIES?Nr=90001#pageSize=MORE&Nr=90001";
+var url = "http://www.stories.com/New_in";
 
 function getProducts(url, callback) {
 	request(url, function (error, response, body) {
 		if (error) throw error;
 
 		$ = cheerio.load(body);
-		productList = $("#list-products a");
+		productList = $("#masonry a");
 		// console.log(productList);
 
 		var productLinks = [];
 
 		productList.each(function() {
-			productLinks.push($(this).attr("href"));
+			productLinks.push("http://www.stories.com" + $(this).attr("href"));
 		})
 
 		//console.log(productLinks);
@@ -23,7 +23,7 @@ function getProducts(url, callback) {
 	});
 };
 
-getProducts(url, function (productLinks) {
+getProducts(url, function (productLinks) { 
 	for(link in productLinks) {
 
 		request(productLinks[link], (function(link) {
@@ -32,21 +32,23 @@ getProducts(url, function (productLinks) {
 				
 				$_ = cheerio.load(body);
 
-				var title = $_("h1").text().replace(/\s+/g, ' ').split("£")[0].slice(1);
+				var title = $_("#content > .page h1").text().split(/\r?\n/)[0]
 
-				var imageUrl = $_("#product-image").attr('src');
+				var imageUrl = "http://www.stories.com" + $_(".product-gallery img").attr('src');
 
-				if (imageUrl.substring(0,2) == "//") {
-					imageUrl = "http:" + imageUrl;
-				};
+				//console.log(imageUrl);
 
-				var type = $_(".breadcrumbs li:nth-last-child(2)").text().split("/")[0].trim();
+				// if (imageUrl.substring(0,2) == "//") {
+				// 	imageUrl = "http:" + imageUrl;
+				// };
 
-				var brand = "H&M";
+				var type = title.split(" ").pop();
 
-				var shop = "H&M";
+				var brand = "& other Stories";
 
-				var price = $_("#text-price span").text()
+				var shop = "& other Stories";
+
+				var price = $_(".product-selection .price").text()
 
 				var item = {
 					"title": title, 
@@ -74,10 +76,3 @@ getProducts(url, function (productLinks) {
 		})(productLinks[link]));
 	}
 });
-
-/*var google = "http://www.google.com";
-request(google, function (error, response, body) {
-  if (!error && response.statusCode == 200) {
-    console.log(body) // Print the google web page.
-  }
-})*/

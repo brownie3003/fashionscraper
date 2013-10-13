@@ -1,6 +1,6 @@
-require 'rubygems'
 require 'mechanize'
-require 'open-uri'
+require "mongo"
+require "json"
 
 agent = Mechanize.new
 
@@ -29,24 +29,9 @@ productLinks.each do |link|
 
 	images.each do |element|
 		if element.attr("href").to_s[0,2] == "//"
-			imageLinks << element.attr("href")
+			imageLinks << "http:" + element.attr("href")
 		end
 	end
-
-	i = 0
-	imageUrls = Hash.new
-
-	while i < imageLinks.length do
-		imageLinks.each do |element|
-			imageUrls["image#{i}"] = "http:" + element
-			i +=1
-		end
-	end
-
-	# "image" => imageUrls
-
-	# How to get a certain image.
-	#puts item["images"]["image1"]
 	
 	price = "£" + agent.page.search(".price span").attr("data-price").value.split[0]
 	
@@ -57,6 +42,8 @@ productLinks.each do |link|
 	case 
 	when (title.to_s.include? "DRESS")
 		category = "Dresses"
+	when (title.to_s.include? "JUMPER")
+		category = "Jumpers"
 	when (title.to_s.include? "SWEATER" or title.to_s.include? "SWEATSHIRT")
 		category = "Jumpers"
 		subCategory = "Sweaters"
@@ -85,12 +72,24 @@ productLinks.each do |link|
 	when (title.to_s.include? "BAG")
 		category = "Accessories"
 		subCategory = "Bags"
+	when (title.to_s.include? "STOLE")
+		category = "Accessories"
+		subCategory = "Stoles"
 	when (title.to_s.include? "SCARF")
 		category = "Accessories"
 		subCategory = "Scarves"
 	when (title.to_s.include? "BRACELET")
 		category = "Accessories"
 		subCategory = "Jewellery"
+	when (title.to_s.include? "NECKLACE")
+		category = "Accessories"
+		subCategory = "Jewellery"
+	when (title.to_s.include? "BELT")
+		category = "Accessories"
+		subCategory = "Belts"
+	when (title.to_s.include? "FOOTIES")
+		category = "Accessories"
+		subCategory = "Socks"
 	when (title.to_s.include? "PHONE COVER")
 		category = "Accessories"
 		subCategory = "Phone Cover"
@@ -99,14 +98,29 @@ productLinks.each do |link|
 		subCategory = "Jeans"
 	when (title.to_s.include? "TROUSERS")
 		category = "Trousers"
+	when (title.to_s.include? "LEGGINGS")
+		category = "Trousers"
+		subCategory = "Leggings"
+	when (title.to_s.include? "MINAUDIÉRE")
+		category = "Accessories"
+		subCategory = "Minaudières"
 	when (title.to_s.include? "SKIRT")
 		category = "Skirts"
+	when (title.to_s.include? "SKORT")
+		category = "Skirts"
+		subCategory = "Skorts"
 	when (title.to_s.include? "BOOT")
 		category = "Shoes"
 		subCategory = "Boots"
 	when (title.to_s.include? "SHOE")
 		category = "Shoes"
+	when (title.to_s.include? "MOCCASIN")
+		category = "Shoes"
+		subCategory = "Flats"
 	when (title.to_s.include? "BALLERINA")
+		category = "Shoes"
+		subCategory = "Flats"
+	when (title.to_s.include? "PLIMSOLLS")
 		category = "Shoes"
 		subCategory = "Flats"
 	else
@@ -115,39 +129,38 @@ productLinks.each do |link|
 	end
 
 	materials = agent.page.search(".composition ul div p").text.strip.delete("\r").delete("\t")
-	#materials = Hash[*materials]
-
 
 	item = {
 		"title" => title,
 		"url" => link,
-		"images" => imageUrls,
+		"images" => imageLinks,
 		"price" => price,
 		"shop" => shop,
 		"brand" => brand,
 		"category" => category,
 		"subCategory" => subCategory,
 		"materials" => materials,
-		"collectionDate" => Date.new
+		"collectionDate" => Time.now.strftime("%a %b %d %Y")
 	}
 
-	puts item
+	uri = "mongodb://andy:weave2013@paulo.mongohq.com:10000/weave-dev"
+
+	client = Mongo::MongoClient.from_uri(uri)
+
+	db_name = uri[%r{/([^/\?]+)(\?|$)}, 1]
+	db = client.db(db_name)
+
+	products = db.collection("products")
+
+	# Note that the insert method can take either an array or a single dict.
+	if products.find("url" => link).to_a.empty?
+		if category != "undefined" && subCategory != "undefined"
+			products.insert(item)
+			puts "inserted " + title
+		else
+			puts "Did not insert " + title + " because the category and sub category are undefined. Check " + link
+		end
+	else
+		puts title + " already exists in the database"
+	end
 end
-
-
-# links.each do |link|
-# 	agent.get
-# 	agent.page.link_with(text: "#{link}").click
-
-# 	title = agent.page.search("h1").map(&:text).map(&:strip)
-
-# 	imageUrl = agent.page.search("#bigImage").attr("src")
-
-# 	puts "The title #{title}, lives at #{imageUrl}"
-# end
-
-# links.each do |link|
-# 	puts link
-# 	agent.page.link_with(text: "#{link}").click
-# 	puts agent.page
-# end	

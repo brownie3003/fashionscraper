@@ -143,16 +143,16 @@ def categorize title
 end
 
 # example of categorize usage
-title = "Maxi Dress"
+# title = "Maxi Dress"
 
-begin
-	category, subCategory = categorize title
-	if subCategory == nil && category == nil
-		puts "ALERT =================================="
-	end
-rescue Exception => e
-	puts e
-end
+# begin
+# 	category, subCategory = categorize title
+# 	if subCategory == nil && category == nil
+# 		puts "ALERT =================================="
+# 	end
+# rescue Exception => e
+# 	puts e
+# end
 
-puts category
-puts subCategory
+# puts category
+# puts subCategory

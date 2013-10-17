@@ -15,38 +15,39 @@ category_links = Array.new
 
 category_titles = Array.new
 
-# category.each do |element|
-# 	link = agent.page.link_with(text: element.text).href
-# 	category_links << "http://www.asos.com" + link
-# 	title = element.text
-# 	category_titles << title
-# end
+category.each do |element|
+	link = agent.page.link_with(text: element.text).href
+	category_links << "http://www.asos.com" + link
+	title = element.text
+	category_titles << title
+end
 
 categories_hash = Hash.new
-# categories_hash = Hash[category_titles.zip(category_links)]
+categories_hash = Hash[category_titles.zip(category_links)]
 
 agent.get("http://www.asos.com/Women/New-In-Shoes-Accs/Cat/pgecategory.aspx?cid=6992&via=top")
 
 categories_hash["Shoes"] = "http://www.asos.com" + agent.page.link_with(text: "Shoes").href
-puts categories_hash["Shoes"]
 categories_hash["Bags"] = "http://www.asos.com" + agent.page.link_with(text: "Bags & Purses").href
 
 # puts categories_hash
 
 categories_hash.each do |cat, link|
+	puts cat
 	agent.get(link)
 	begin
 		agent.page.link_with(text: "View all").click
 	rescue
+		puts "had to rescue"
 	end
 
 	products = agent.page.search("#items .desc").map(&:text)
-	puts link + " " + products.to_s
+	# puts link + " " + products.to_s
 
 	product_links = Array.new
 
 	products.each do |name|
-		product_links << agent.page.link_with(text: name).href
+		product_links << "http://www.asos.com" + agent.page.link_with(text: name).href
 	end
 
 	shop = "ASOS"
@@ -57,7 +58,8 @@ categories_hash.each do |cat, link|
 		title = agent.page.search("#ctl00_ContentMainPage_ctlSeparateProduct_lblProductTitle").text.strip
 
 		image = agent.page.search("#ctl00_ContentMainPage_imgMainImage").attr("src")
-		imageLinks = [image]
+		# puts image
+		imageLinks = [image.value]
 
 		i = 2
 		image_exists = true
@@ -77,6 +79,8 @@ categories_hash.each do |cat, link|
 	 		end
 			i += 1
 	 	end
+
+		puts imageLinks
 
 		category = agent.page.search("#ctl00_ContentMainPage_ctlSeparateProduct_divInvLongDescription a:nth-child(1) strong").text
 
@@ -103,7 +107,7 @@ categories_hash.each do |cat, link|
 
 		puts title + ". Category: " + category.to_s + ". Subcategory: " + subCategory.to_s
 
-		# puts title + " by " + brand + ". It costs " + price
+		puts title + " by " + brand + ". It costs " + price
 
 		item = {
 			"title" => title,
@@ -118,6 +122,8 @@ categories_hash.each do |cat, link|
 			"description" => description,
 			"collectionDate" => Time.now.strftime("%a %b %d %Y")
 		}
+
+		puts item
 
 		uri = "mongodb://andy:weave2013@paulo.mongohq.com:10000/weave-dev"
 

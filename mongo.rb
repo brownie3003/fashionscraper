@@ -11,7 +11,7 @@ seed_data = {
 
 ### Standard URI format: mongodb://[dbuser:dbpassword@]host:port/dbname
 
-uri = "mongodb://weave:weave2013@ds049568.mongolab.com:49568/weave-development"
+uri = "mongodb://andy:weave2013@paulo.mongohq.com:10000/weave-dev"
 
 client = Mongo::MongoClient.from_uri(uri)
 

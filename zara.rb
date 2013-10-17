@@ -12,7 +12,7 @@ products = agent.page.search(".name").map(&:text)
 
 # puts products
 
-productLinks = []
+productLinks = Array.new
 
 products.each do |name|
 	productLinks.push(agent.page.link_with(text: "#{name}").href)
@@ -21,19 +21,23 @@ end
 # puts productLinks
 
 productLinks.each do |link|
-	agent.get("#{link}")
+	agent.get(link)
 	title = agent.page.search("h1").text.strip
 	
 	images = agent.page.search(".media-wrap a")
-	imageLinks = []
+	imageLinks = Array.new
 
 	images.each do |element|
 		if element.attr("href").to_s[0,2] == "//"
 			imageLinks << "http:" + element.attr("href")
 		end
 	end
-	
-	price = "£" + agent.page.search(".price span").attr("data-price").value.split[0]
+
+	begin
+		price = "£" + agent.page.search(".price span").attr("data-price").value.split[0]
+	rescue Exception => e
+		puts "There was an error with page: " + link
+	end
 	
 	shop = "Zara"
 	
@@ -90,9 +94,6 @@ productLinks.each do |link|
 	when (title.to_s.include? "FOOTIES")
 		category = "Accessories"
 		subCategory = "Socks"
-	when (title.to_s.include? "PHONE COVER")
-		category = "Accessories"
-		subCategory = "Phone Cover"
 	when (title.to_s.include? "JEANS")
 		category = "Trousers"
 		subCategory = "Jeans"
@@ -158,7 +159,7 @@ productLinks.each do |link|
 			products.insert(item)
 			puts "inserted " + title
 		else
-			puts "Did not insert " + title + " because the category and sub category are undefined. Check " + link
+			puts "Did not insert " + title + " because the category or sub category are undefined. Check " + link
 		end
 	else
 		puts title + " already exists in the database"

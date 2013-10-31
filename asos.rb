@@ -33,7 +33,8 @@ categories_hash["Bags"] = "http://www.asos.com" + agent.page.link_with(text: "Ba
 # puts categories_hash
 
 categories_hash.each do |cat, link|
-	puts cat
+	# puts cat
+	
 	agent.get(link)
 	begin
 		agent.page.link_with(text: "View all").click
@@ -55,11 +56,18 @@ categories_hash.each do |cat, link|
 	product_links.each do |link|
 		agent.get(link)
 
-		title = agent.page.search("#ctl00_ContentMainPage_ctlSeparateProduct_lblProductTitle").text.strip
+		brand = agent.page.search("#ctl00_ContentMainPage_ctlSeparateProduct_divInvLongDescription h2").text
+		brand.slice! "ABOUT "
+		
+		title = agent.page.search("#ctl00_ContentMainPage_ctlSeparateProduct_lblProductTitle").text.strip.gsub(/(#{brand})/i, "").strip
+
+		if title.include? "ASOS"
+			title.gsub!("ASOS", "").strip!
+		end
 
 		image = agent.page.search("#ctl00_ContentMainPage_imgMainImage").attr("src")
 		# puts image
-		imageLinks = [image.value]
+		image_links = [image.value]
 
 		i = 2
 		image_exists = true
@@ -75,17 +83,15 @@ categories_hash.each do |cat, link|
 				image_exists = false
 			end
 			if image_exists == true
-	 			imageLinks << new_image
+	 			image_links << new_image
 	 		end
 			i += 1
 	 	end
 
-		puts imageLinks
+		# puts image_links
 
-		category = agent.page.search("#ctl00_ContentMainPage_ctlSeparateProduct_divInvLongDescription a:nth-child(1) strong").text
+		# category = agent.page.search("#ctl00_ContentMainPage_ctlSeparateProduct_divInvLongDescription a:nth-child(1) strong").text
 
-		brand = agent.page.search("#ctl00_ContentMainPage_ctlSeparateProduct_divInvLongDescription h2").text
-		brand.slice! "ABOUT "
 
 		price = agent.page.search("#ctl00_ContentMainPage_ctlSeparateProduct_lblProductPrice").text
 
@@ -97,7 +103,8 @@ categories_hash.each do |cat, link|
 		end
 		
 		begin
-			category, subCategory = categorize title
+			# Method categorize must have a category.
+			category, subCategory = categorize title, cat
 			if subCategory == nil && category == nil
 				puts "ALERT =================================="
 			end
@@ -105,14 +112,17 @@ categories_hash.each do |cat, link|
 			puts e
 		end
 
-		puts title + ". Category: " + category.to_s + ". Subcategory: " + subCategory.to_s
+		puts category
+		puts subCategory
 
-		puts title + " by " + brand + ". It costs " + price
+		# puts title + ". Category: " + category.to_s + ". Subcategory: " + subCategory.to_s
+
+		# puts title + " by " + brand + ". It costs " + price
 
 		item = {
 			"title" => title,
 			"url" => link,
-			"images" => imageLinks,
+			"images" => image_links,
 			"price" => price,
 			"shop" => shop,
 			"brand" => brand,
@@ -123,7 +133,7 @@ categories_hash.each do |cat, link|
 			"collectionDate" => Time.now.strftime("%a %b %d %Y")
 		}
 
-		puts item
+		# puts item
 
 		uri = "mongodb://andy:weave2013@paulo.mongohq.com:10000/weave-dev"
 
@@ -136,7 +146,7 @@ categories_hash.each do |cat, link|
 
 		# Note that the insert method can take either an array or a single dict.
 		if products.find("url" => link).to_a.empty?
-			if category != "undefined" && subCategory != "undefined"
+			if category != nil
 			# 	puts "Title: " + item["title"]
 			# 	puts "URL: " + item["url"]
 			# 	puts "Image Links: " + item["images"].to_s
@@ -165,6 +175,6 @@ categories_hash.each do |cat, link|
 			puts title + " already exists in the database"
 		end
 
-		# puts "Item: " + title.to_s + " - Images located at: " +  imageLinks.to_s
+		# puts "Item: " + title.to_s + " - Images located at: " +  image_links.to_s
 	end
 end

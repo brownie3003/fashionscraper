@@ -1,12 +1,11 @@
 require 'mechanize'
 require "mongo"
 require "json"
+require "chronic"
 
 agent = Mechanize.new
 
-agent.get("http://www.zara.com/uk/");
-
-agent.page.link_with(text: "\r\n\t\t\t              \t\tNew this week\r\n\t\t\t              \t").click
+agent.get("http://www.zara.com/uk/en/new-this-week/woman-c287002.html");
 
 products = agent.page.search(".name").map(&:text)
 
@@ -125,8 +124,8 @@ productLinks.each do |link|
 		category = "Shoes"
 		subCategory = "Flats"
 	else
-		category = "undefined"
-		subCategory = "undefined"		
+		category = nil
+		subCategory = nil
 	end
 
 	materials = agent.page.search(".composition ul div p").text.strip.delete("\r").delete("\t")
@@ -141,8 +140,11 @@ productLinks.each do |link|
 		"category" => category,
 		"subCategory" => subCategory,
 		"materials" => materials,
-		"collectionDate" => Time.now.strftime("%a %b %d %Y")
+		"collectionDate" => Chronic.parse("next Friday").strftime("%a %b %d %Y")
+		"addedDate" => Time.now.strftime("%a %b %d %Y")
 	}
+
+	# puts item["collectionDate"]
 
 	uri = "mongodb://andy:weave2013@paulo.mongohq.com:10000/weave-dev"
 
@@ -155,7 +157,7 @@ productLinks.each do |link|
 
 	# Note that the insert method can take either an array or a single dict.
 	if products.find("url" => link).to_a.empty?
-		if category != "undefined" && subCategory != "undefined"
+		if category != nil
 			products.insert(item)
 			puts "inserted " + title
 		else

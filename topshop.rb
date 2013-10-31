@@ -5,7 +5,7 @@ require "mongo"
 require "json"
 
 categories_hash = {
-	"dresses_playsuits" => "http://www.topshop.com/en/tsuk/category/new-in-this-week-2169932/new-in-this-week-493/dresses-playsuits-678",
+	"dresses" => "http://www.topshop.com/en/tsuk/category/new-in-this-week-2169932/new-in-this-week-493/dresses-playsuits-678",
 	"shoes" => "http://www.topshop.com/en/tsuk/category/new-in-this-week-2169932/new-in-this-week-493/shoes-679",
 	"tops" => "http://www.topshop.com/en/tsuk/category/new-in-this-week-2169932/new-in-this-week-493/tops-680",
 	"knitwear" => "http://www.topshop.com/en/tsuk/category/new-in-this-week-2169932/new-in-this-week-493/knitwear-681",
@@ -137,8 +137,8 @@ categories_hash.each do |cat, link|
 		when (title.to_s.include? "Skirt" or title.to_s.include? "Kilt")
 		category = "Skirts"
 		else
-			category = "undefined"
-			subCategory = "undefined"		
+			category = nil
+			subCategory = nil
 		end
 
 		# puts title.to_s + ", Category: " + category.to_s + ", Subcategory: " + subCategory.to_s
@@ -147,14 +147,14 @@ categories_hash.each do |cat, link|
 		imageLinks = Array.new
 
 		images.each do |element|
-			link = element.attr('href')
-			imageLinks << link
+			image_link = element.attr('href')
+			imageLinks << image_link
 
 			i = 2
 			image_exists = true
 
 			until image_exists == false do
-				baseLink = link.slice(0..-10)
+				baseLink = image_link.slice(0..-10)
 				begin
 					image_agent = Mechanize.new
 					image_agent.get(baseLink + "#{i}_large.jpg")
@@ -192,7 +192,7 @@ categories_hash.each do |cat, link|
 
 		# Note that the insert method can take either an array or a single dict.
 		if products.find("url" => link).to_a.empty?
-			if category != "undefined" && subCategory != "undefined"
+			if category != nil
 			# 	puts "Title: " + item["title"]
 			# 	puts "URL: " + item["url"]
 			# 	puts "Image Links: " + item["images"].to_s
